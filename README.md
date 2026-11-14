@@ -1,13 +1,14 @@
 # Carolina Hurricanes Schedule — NHL LED Scoreboard
 
-A plugin for the **Falkyre NHL LED Scoreboard** that displays the next 10 Carolina Hurricanes games, rotating one game per screen.
+A plugin for the **Falkyre NHL LED Scoreboard** that displays the next 10 Carolina Hurricanes games, scrolling vertically from one game to the next.
 
 - Target: Falkyre 2026.03
 - Matrix layout: 64x32
 - Team: Carolina Hurricanes (CAR)
 - Display timezone: America/New_York (Eastern Time)
 - Refresh interval: every 30 minutes
-- Screen interval: 7 seconds
+- Screen interval: 7 seconds per game
+- Vertical transition: 0.8 seconds
 - Data source: NHL public schedule API
 
 ## Install
@@ -39,7 +40,8 @@ Edit `src/boards/plugins/carolina_schedule/config.json`:
 | Setting | Default | Purpose |
 |---|---:|---|
 | `games_to_show` | 10 | Number of future games fetched |
-| `display_seconds` | 7 | Seconds per game screen |
+| `display_seconds` | 7 | Seconds each game remains on screen |
+| `scroll_seconds` | 0.8 | Duration of the vertical transition |
 | `refresh_minutes` | 30 | Schedule refresh interval |
 | `timezone` | America/New_York | Display timezone |
 | `team_abbreviation` | CAR | NHL team abbreviation |
@@ -49,7 +51,9 @@ The plugin uses Python's standard library and does not require additional packag
 
 ## Display
 
-Each 64x32 screen uses the small font for all three lines to keep text within the panel. It shows `CANES SCHEDULE`, the matchup, and a compact local date/time (for example, `Nov 15 7PM`). A home game is shown as `CAR vs OPP`; an away game is shown as `CAR @ OPP`.
+Each 64x32 screen keeps the same compact three-line layout: `CANES SCHEDULE`, the matchup, and the local date/time (for example, `Nov 15 7PM`). After each game has been displayed, the full three-line screen slides upward and the next game enters from the bottom. The small font is retained on all three lines.
+
+A home game is shown as `CAR vs OPP`; an away game is shown as `CAR @ OPP`.
 
 ## Notes
 
