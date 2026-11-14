@@ -156,32 +156,47 @@ class CarolinaScheduleBoard(BoardBase):
         self._draw_fixed_heading_over_scroll(layout)
 
     def render(self):
-        self._refresh_if_needed()
+        """Keep cycling through every upcoming game until the board is deactivated."""
         layout = self.get_board_layout("carolina_schedule")
 
-        if self._error and not self._games:
-            self._draw_status(layout, "DATA UNAVAILABLE", "CHECK NETWORK")
+        while not self.sleepEvent.is_set():
+            self._refresh_if_needed()
+
+            if self._error and not self._games:
+                self._draw_status(layout, "DATA UNAVAILABLE", "CHECK NETWORK")
+                self.matrix.render()
+                if self.sleepEvent.wait(self.display_seconds):
+                    return
+                continue
+
+            if not self._games:
+                self._draw_status(layout, "NO UPCOMING GAMES", "SCHEDULE CLEAR")
+                self.matrix.render()
+                if self.sleepEvent.wait(self.display_seconds):
+                    return
+                continue
+
+            current_index = self._game_index % len(self._games)
+            current_game = self._games[current_index]
+
+            self.matrix.clear()
+            self._draw_heading(layout)
+            self._draw_game_details(layout, current_game)
+            self._draw_fixed_heading_over_scroll(layout)
             self.matrix.render()
-            self.sleepEvent.wait(self.display_seconds)
-            return
-        if not self._games:
-            self._draw_status(layout, "NO UPCOMING GAMES", "SCHEDULE CLEAR")
-            self.matrix.render()
-            self.sleepEvent.wait(self.display_seconds)
-            return
 
-        current_index = self._game_index % len(self._games)
-        current_game = self._games[current_index]
-        self.matrix.clear()
-        self._draw_heading(layout)
-        self._draw_game_details(layout, current_game)
-        self._draw_fixed_heading_over_scroll(layout)
-        self.matrix.render()
+            if self.sleepEvent.wait(self.display_seconds):
+                return
 
-        if self.sleepEvent.wait(self.display_seconds):
-            return
-
-        if len(self._games) > 1:
-            next_index = (current_index + 1) % len(self._games)
-            if self._scroll_to_next_game(layout, current_game, self._games[next_index]):
+            # Advance continuously through the entire list, then wrap to game one.
+            if len(self._games) > 1:
+                next_index = (current_index + 1) % len(self._games)
+                if not self._scroll_to_next_game(
+                    layout, current_game, self._games[next_index]
+                ):
+                    return
                 self._game_index = next_index
+            else:
+                # A single-game schedule remains visible until the board changes.
+                if self.sleepEvent.wait(self.display_seconds):
+                    return
