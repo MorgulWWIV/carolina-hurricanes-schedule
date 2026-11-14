@@ -49,7 +49,7 @@ The plugin uses Python's standard library and does not require additional packag
 
 ## Display
 
-Each 64x32 screen shows the matchup and local date/time. A home game is shown as `CAR vs OPP`; an away game is shown as `CAR @ OPP`.
+Each 64x32 screen uses the small font for all three lines to keep text within the panel. It shows `CANES SCHEDULE`, the matchup, and a compact local date/time (for example, `Nov 15 7PM`). A home game is shown as `CAR vs OPP`; an away game is shown as `CAR @ OPP`.
 
 ## Notes
 
