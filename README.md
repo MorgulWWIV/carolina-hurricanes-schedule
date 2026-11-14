@@ -54,18 +54,6 @@ Enable `nhl_team_schedule` in the scoreboard's state configuration if it is not 
 sudo systemctl restart nhl-scoreboard
 ```
 
-### Existing installation migration
-
-This release changes the plugin ID from `carolina_schedule` to `nhl_team_schedule`. Because Falkyre uses the plugin ID in its configuration and plugin directory, an existing installation may need to be migrated rather than simply synced in place.
-
-1. Back up your existing `carolina_schedule/config.json` if you have customized it.
-2. Install or sync this repository so the new `nhl_team_schedule` plugin directory is created.
-3. Copy your saved configuration into `src/boards/plugins/nhl_team_schedule/config.json`.
-4. Change the enabled board/plugin entry in Falkyre's state configuration from `carolina_schedule` to `nhl_team_schedule`.
-5. Restart the scoreboard service.
-
-Do not delete the old plugin directory until the new board is running correctly.
-
 ## Configuration
 
 | Setting | Default | Purpose |
