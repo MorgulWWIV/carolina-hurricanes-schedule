@@ -26,7 +26,7 @@ Edit `src/boards/plugins/nhl_team_schedule/config.json` and change `team_abbrevi
 | Edmonton Oilers | EDM |
 | Vegas Golden Knights | VGK |
 
-Use the NHL team's three-letter abbreviation. The heading on the display is generic: **TEAM GAMES**.
+Use the NHL team's three-letter abbreviation. The heading on the display is generic: **UPCOMING GAMES**.
 
 ## Install
 
@@ -79,7 +79,7 @@ Do not delete the old plugin directory until the new board is running correctly.
 
 ## Display behavior
 
-The 64x32 display keeps **TEAM GAMES** fixed at the top. The matchup and local date/time scroll upward through the lower portion of the display. It shows one complete pass through the selected team's upcoming games, then returns control to Falkyre's board rotation.
+The 64x32 display keeps **UPCOMING GAMES** fixed at the top. The matchup and local date/time scroll upward through the lower portion of the display. It shows one complete pass through the selected team's upcoming games, then returns control to Falkyre's board rotation.
 
 A home game is shown as `TEAM vs OPP`; an away game is shown as `TEAM @ OPP`.
 
