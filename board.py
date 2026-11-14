@@ -17,7 +17,7 @@ SCHEDULE_URL = "https://api-web.nhle.com/v1/club-schedule-season/{team}/now"
 
 
 class CarolinaScheduleBoard(BoardBase):
-    """Rotate through the next several Carolina Hurricanes games."""
+    """Scroll vertically through the next several Carolina Hurricanes games."""
 
     def __init__(self, data, matrix, sleepEvent):
         super().__init__(data, matrix, sleepEvent)
@@ -28,6 +28,7 @@ class CarolinaScheduleBoard(BoardBase):
         self.games_to_show = int(self.board_config.get("games_to_show", 10))
         self.display_seconds = int(self.board_config.get("display_seconds", 7))
         self.refresh_seconds = int(self.board_config.get("refresh_minutes", 30)) * 60
+        self.scroll_seconds = float(self.board_config.get("scroll_seconds", 0.8))
         self.timezone_name = self.board_config.get("timezone", "America/New_York")
         self.team_abbreviation = self.board_config.get("team_abbreviation", "CAR")
         self.show_venue = bool(self.board_config.get("show_venue", False))
@@ -102,38 +103,91 @@ class CarolinaScheduleBoard(BoardBase):
         finally:
             self._last_refresh = now
 
-    def _draw(self, layout, key, value, color):
-        if layout and key in layout:
-            self.matrix.draw_text_layout(layout[key], value, fillColor=color)
-        else:
-            y_positions = {"title": 6, "matchup": 17, "date_time": 28}
-            font = self.font_large if key == "matchup" else self.font
-            self.matrix.draw_text_centered(
-                y_positions[key], value, font, color
-            )
+    def _draw_card(self, layout, game, vertical_offset=0):
+        """Draw the existing three-line layout shifted vertically by pixel offset."""
+        lines = (
+            ("title", "CANES SCHEDULE", "red"),
+            ("matchup", game["matchup"], "white"),
+            ("date_time", game["date_time"], "cyan"),
+        )
+
+        for key, value, color in lines:
+            if layout and key in layout:
+                item = layout[key]
+                position = self.matrix.layout_position(item)
+                position = (position[0], position[1] + vertical_offset)
+                self.matrix.draw_text(
+                    position,
+                    value,
+                    font=item.font,
+                    fill=color,
+                    align=item.align
+                )
+            else:
+                y_positions = {"title": 6, "matchup": 17, "date_time": 28}
+                font = self.font_large if key == "matchup" else self.font
+                self.matrix.draw_text_centered(
+                    y_positions[key] + vertical_offset, value, font, color
+                )
+
+    def _scroll_to_next_game(self, layout, current_game, next_game):
+        """Slide the current three-line screen up as the next screen enters below."""
+        height = self.display_height
+        steps = max(1, height)
+        frame_delay = self.scroll_seconds / steps
+
+        for step in range(1, steps + 1):
+            if self.sleepEvent.is_set():
+                return False
+
+            offset = round(height * step / steps)
+            self.matrix.clear()
+            self._draw_card(layout, current_game, -offset)
+            self._draw_card(layout, next_game, height - offset)
+            self.matrix.render()
+
+            if self.sleepEvent.wait(frame_delay):
+                return False
+
+        return True
 
     def render(self):
         self._refresh_if_needed()
-        self.matrix.clear()
         layout = self.get_board_layout("carolina_schedule")
 
         if self._error and not self._games:
-            title = "CANES SCHEDULE"
-            matchup = "DATA UNAVAILABLE"
-            date_time = "CHECK NETWORK"
-        elif not self._games:
-            title = "CANES SCHEDULE"
-            matchup = "NO UPCOMING GAMES"
-            date_time = "SCHEDULE CLEAR"
-        else:
-            game = self._games[self._game_index % len(self._games)]
-            title = "CANES SCHEDULE"
-            matchup = game["matchup"]
-            date_time = game["date_time"]
-            self._game_index = (self._game_index + 1) % len(self._games)
+            self.matrix.clear()
+            self._draw_status(layout, "DATA UNAVAILABLE", "CHECK NETWORK")
+            self.matrix.render()
+            self.sleepEvent.wait(self.display_seconds)
+            return
 
-        self._draw(layout, "title", title, "red")
-        self._draw(layout, "matchup", matchup, "white")
-        self._draw(layout, "date_time", date_time, "cyan")
+        if not self._games:
+            self.matrix.clear()
+            self._draw_status(layout, "NO UPCOMING GAMES", "SCHEDULE CLEAR")
+            self.matrix.render()
+            self.sleepEvent.wait(self.display_seconds)
+            return
+
+        current_index = self._game_index % len(self._games)
+        current_game = self._games[current_index]
+
+        self.matrix.clear()
+        self._draw_card(layout, current_game)
         self.matrix.render()
-        self.sleepEvent.wait(self.display_seconds)
+
+        if self.sleepEvent.wait(self.display_seconds):
+            return
+
+        if len(self._games) > 1:
+            next_index = (current_index + 1) % len(self._games)
+            next_game = self._games[next_index]
+            if self._scroll_to_next_game(layout, current_game, next_game):
+                self._game_index = next_index
+
+    def _draw_status(self, layout, matchup, date_time):
+        """Draw the normal heading and status text when no schedule is available."""
+        self._draw_card(
+            layout,
+            {"matchup": matchup, "date_time": date_time}
+        )
