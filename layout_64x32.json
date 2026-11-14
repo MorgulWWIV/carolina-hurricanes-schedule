@@ -1,0 +1,23 @@
+{
+  "_default": {
+    "position": [0, 0],
+    "align": "left-top"
+  },
+  "carolina_schedule": {
+    "title": {
+      "position": ["50%", 5],
+      "align": "center-top",
+      "font": "medium"
+    },
+    "matchup": {
+      "position": ["50%", 16],
+      "align": "center-top",
+      "font": "wx_medium"
+    },
+    "date_time": {
+      "position": ["50%", 27],
+      "align": "center-top",
+      "font": "medium"
+    }
+  }
+}
