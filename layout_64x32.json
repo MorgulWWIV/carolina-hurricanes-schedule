@@ -5,19 +5,19 @@
   },
   "carolina_schedule": {
     "title": {
-      "position": ["50%", 5],
+      "position": ["50%", 3],
       "align": "center-top",
-      "font": "medium"
+      "font": "small"
     },
     "matchup": {
-      "position": ["50%", 16],
+      "position": ["50%", 13],
       "align": "center-top",
-      "font": "wx_medium"
+      "font": "small"
     },
     "date_time": {
-      "position": ["50%", 27],
+      "position": ["50%", 23],
       "align": "center-top",
-      "font": "medium"
+      "font": "small"
     }
   }
 }
