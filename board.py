@@ -12,12 +12,11 @@ from boards.base_board import BoardBase
 from . import __version__, __description__, __board_name__
 
 debug = logging.getLogger("scoreboard")
-
 SCHEDULE_URL = "https://api-web.nhle.com/v1/club-schedule-season/{team}/now"
 
 
 class CarolinaScheduleBoard(BoardBase):
-    """Scroll vertically through the next several Carolina Hurricanes games."""
+    """Keep the heading fixed while upcoming game details scroll upward."""
 
     def __init__(self, data, matrix, sleepEvent):
         super().__init__(data, matrix, sleepEvent)
@@ -31,7 +30,6 @@ class CarolinaScheduleBoard(BoardBase):
         self.scroll_seconds = float(self.board_config.get("scroll_seconds", 0.8))
         self.timezone_name = self.board_config.get("timezone", "America/New_York")
         self.team_abbreviation = self.board_config.get("team_abbreviation", "CAR")
-        self.show_venue = bool(self.board_config.get("show_venue", False))
 
         self.font = data.config.layout.font
         self.font_large = data.config.layout.font_large
@@ -41,11 +39,9 @@ class CarolinaScheduleBoard(BoardBase):
         self._game_index = 0
 
     def _fetch_games(self):
-        """Fetch and normalize future games from the NHL schedule API."""
         url = SCHEDULE_URL.format(team=self.team_abbreviation)
         request = urllib.request.Request(
-            url,
-            headers={"User-Agent": "NHL-LED-Scoreboard-Carolina-Schedule/1.0"}
+            url, headers={"User-Agent": "NHL-LED-Scoreboard-Carolina-Schedule/1.0"}
         )
         with urllib.request.urlopen(request, timeout=12) as response:
             payload = json.loads(response.read().decode("utf-8"))
@@ -53,14 +49,11 @@ class CarolinaScheduleBoard(BoardBase):
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         local_tz = ZoneInfo(self.timezone_name)
         games = []
-
         for game in payload.get("games", []):
             start_text = game.get("startTimeUTC")
             if not start_text:
                 continue
-            start_utc = datetime.datetime.fromisoformat(
-                start_text.replace("Z", "+00:00")
-            )
+            start_utc = datetime.datetime.fromisoformat(start_text.replace("Z", "+00:00"))
             if start_utc <= now_utc:
                 continue
 
@@ -68,18 +61,15 @@ class CarolinaScheduleBoard(BoardBase):
             away = game.get("awayTeam", {})
             is_home = home.get("abbrev") == self.team_abbreviation
             opponent = away if is_home else home
-            opponent_abbrev = opponent.get("abbrev", "TBD")
             local_start = start_utc.astimezone(local_tz)
-
             games.append({
                 "start": start_utc,
                 "matchup": (
-                    f"{self.team_abbreviation} vs {opponent_abbrev}"
+                    f"{self.team_abbreviation} vs {opponent.get('abbrev', 'TBD')}"
                     if is_home else
-                    f"{self.team_abbreviation} @ {opponent_abbrev}"
+                    f"{self.team_abbreviation} @ {opponent.get('abbrev', 'TBD')}"
                 ),
                 "date_time": local_start.strftime("%b %d  %I%p").replace(" 0", " ").replace("  ", " "),
-                "venue": game.get("venue", {}).get("default", "")
             })
 
         games.sort(key=lambda item: item["start"])
@@ -91,7 +81,6 @@ class CarolinaScheduleBoard(BoardBase):
             return
         if not self._games and self._last_refresh and now - self._last_refresh < 60:
             return
-
         try:
             self._games = self._fetch_games()
             self._error = None
@@ -103,67 +92,79 @@ class CarolinaScheduleBoard(BoardBase):
         finally:
             self._last_refresh = now
 
-    def _draw_card(self, layout, game, vertical_offset=0):
-        """Draw the existing three-line layout shifted vertically by pixel offset."""
-        lines = (
-            ("title", "CANES SCHEDULE", "red"),
-            ("matchup", game["matchup"], "white"),
-            ("date_time", game["date_time"], "cyan"),
-        )
+    def _layout_item(self, layout, key):
+        return layout[key] if layout and key in layout else None
 
-        for key, value, color in lines:
-            if layout and key in layout:
-                item = layout[key]
+    def _draw_heading(self, layout):
+        """Draw the fixed heading above the scrolling game area."""
+        title = "Canes Games"
+        item = self._layout_item(layout, "title")
+        if item:
+            self.matrix.draw_text_layout(item, title, fillColor="red")
+        else:
+            self.matrix.draw_text_centered(6, title, self.font, "red")
+
+    def _draw_game_details(self, layout, game, offset=0):
+        """Draw just the matchup and date lines at a vertical offset."""
+        for key, value, color, fallback_y in (
+            ("matchup", game["matchup"], "white", 17),
+            ("date_time", game["date_time"], "cyan", 28),
+        ):
+            item = self._layout_item(layout, key)
+            if item:
                 position = self.matrix.layout_position(item)
-                position = (position[0], position[1] + vertical_offset)
                 self.matrix.draw_text(
-                    position,
+                    (position[0], position[1] + offset),
                     value,
                     font=item.font,
                     fill=color,
-                    align=item.align
+                    align=item.align,
                 )
             else:
-                y_positions = {"title": 6, "matchup": 17, "date_time": 28}
-                font = self.font_large if key == "matchup" else self.font
                 self.matrix.draw_text_centered(
-                    y_positions[key] + vertical_offset, value, font, color
+                    fallback_y + offset, value, self.font, color
                 )
 
+    def _draw_fixed_heading_over_scroll(self, layout):
+        """Mask any scrolling pixels from the heading band, then redraw its label."""
+        self.matrix.draw_rectangle((0, 0), (self.display_width, 11), fill=(0, 0, 0))
+        self._draw_heading(layout)
+
     def _scroll_to_next_game(self, layout, current_game, next_game):
-        """Slide the current three-line screen up as the next screen enters below."""
-        height = self.display_height
-        steps = max(1, height)
+        """Move game details up through the lower panel while the heading stays still."""
+        panel_height = max(1, self.display_height - 11)
+        steps = panel_height
         frame_delay = self.scroll_seconds / steps
 
         for step in range(1, steps + 1):
             if self.sleepEvent.is_set():
                 return False
-
-            offset = round(height * step / steps)
+            offset = round(panel_height * step / steps)
             self.matrix.clear()
-            self._draw_card(layout, current_game, -offset)
-            self._draw_card(layout, next_game, height - offset)
+            self._draw_game_details(layout, current_game, -offset)
+            self._draw_game_details(layout, next_game, panel_height - offset)
+            self._draw_fixed_heading_over_scroll(layout)
             self.matrix.render()
-
             if self.sleepEvent.wait(frame_delay):
                 return False
-
         return True
+
+    def _draw_status(self, layout, matchup, date_time):
+        self.matrix.clear()
+        self._draw_heading(layout)
+        self._draw_game_details(layout, {"matchup": matchup, "date_time": date_time})
+        self._draw_fixed_heading_over_scroll(layout)
 
     def render(self):
         self._refresh_if_needed()
         layout = self.get_board_layout("carolina_schedule")
 
         if self._error and not self._games:
-            self.matrix.clear()
             self._draw_status(layout, "DATA UNAVAILABLE", "CHECK NETWORK")
             self.matrix.render()
             self.sleepEvent.wait(self.display_seconds)
             return
-
         if not self._games:
-            self.matrix.clear()
             self._draw_status(layout, "NO UPCOMING GAMES", "SCHEDULE CLEAR")
             self.matrix.render()
             self.sleepEvent.wait(self.display_seconds)
@@ -171,9 +172,10 @@ class CarolinaScheduleBoard(BoardBase):
 
         current_index = self._game_index % len(self._games)
         current_game = self._games[current_index]
-
         self.matrix.clear()
-        self._draw_card(layout, current_game)
+        self._draw_heading(layout)
+        self._draw_game_details(layout, current_game)
+        self._draw_fixed_heading_over_scroll(layout)
         self.matrix.render()
 
         if self.sleepEvent.wait(self.display_seconds):
@@ -181,13 +183,5 @@ class CarolinaScheduleBoard(BoardBase):
 
         if len(self._games) > 1:
             next_index = (current_index + 1) % len(self._games)
-            next_game = self._games[next_index]
-            if self._scroll_to_next_game(layout, current_game, next_game):
+            if self._scroll_to_next_game(layout, current_game, self._games[next_index]):
                 self._game_index = next_index
-
-    def _draw_status(self, layout, matchup, date_time):
-        """Draw the normal heading and status text when no schedule is available."""
-        self._draw_card(
-            layout,
-            {"matchup": matchup, "date_time": date_time}
-        )
