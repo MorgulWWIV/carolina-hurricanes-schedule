@@ -1,60 +1,75 @@
-# Carolina Hurricanes Schedule — NHL LED Scoreboard
+# NHL Team Schedule — NHL LED Scoreboard
 
-A plugin for the **Falkyre NHL LED Scoreboard** that displays the next 10 Carolina Hurricanes games, keeping a fixed heading while game details scroll upward.
+A configurable plugin for the **Falkyre NHL LED Scoreboard**. Choose any NHL team by its three-letter abbreviation and display that team's next games.
 
 - Target: Falkyre 2026.03
 - Matrix layout: 64x32
-- Team: Carolina Hurricanes (CAR)
+- Default team: Carolina Hurricanes (CAR)
 - Display timezone: America/New_York (Eastern Time)
 - Refresh interval: every 30 minutes
 - Screen interval: 7 seconds per game
 - Vertical transition: 0.8 seconds
 - Data source: NHL public schedule API
 
+## Choose your team
+
+Edit `src/boards/plugins/carolina_schedule/config.json` and change `team_abbreviation` to the NHL club abbreviation you want. Examples:
+
+| Team | Abbreviation |
+|---|---|
+| Carolina Hurricanes | CAR |
+| Buffalo Sabres | BUF |
+| New York Rangers | NYR |
+| Boston Bruins | BOS |
+| Toronto Maple Leafs | TOR |
+| Edmonton Oilers | EDM |
+| Vegas Golden Knights | VGK |
+
+Use the NHL team's three-letter abbreviation. The heading on the display is generic: **TEAM GAMES**.
+
 ## Install
 
-From the NHL LED Scoreboard application directory, run:
+For an existing installation, sync the updated plugin:
+
+```bash
+python plugins.py sync
+```
+
+For a new installation:
 
 ```bash
 python plugins.py add https://github.com/MorgulWWIV/carolina-hurricanes-schedule.git
 ```
 
-Then copy the sample configuration:
+Copy the sample configuration if you do not already have a config file:
 
 ```bash
 cp src/boards/plugins/carolina_schedule/config.sample.json src/boards/plugins/carolina_schedule/config.json
 ```
 
-Enable the board by adding `carolina_schedule` to the states list in `config/config.json` (alongside the other board IDs). Follow the project's plugin documentation for the exact state configuration used by your installation.
-
-Restart the scoreboard service:
+Enable `carolina_schedule` in the scoreboard's state configuration if it is not already enabled, then restart:
 
 ```bash
 sudo systemctl restart nhl-scoreboard
 ```
 
-## Configuration
+The existing plugin ID and directory are retained so current installations can update without reinstalling or changing their board configuration.
 
-Edit `src/boards/plugins/carolina_schedule/config.json`:
+## Configuration
 
 | Setting | Default | Purpose |
 |---|---:|---|
+| `team_abbreviation` | CAR | NHL team to display |
 | `games_to_show` | 10 | Number of future games fetched |
 | `display_seconds` | 7 | Seconds each game remains on screen |
 | `scroll_seconds` | 0.8 | Duration of the vertical transition |
 | `refresh_minutes` | 30 | Schedule refresh interval |
 | `timezone` | America/New_York | Display timezone |
-| `team_abbreviation` | CAR | NHL team abbreviation |
-| `show_venue` | false | Reserved for a future venue display option |
 
-The plugin uses Python's standard library and does not require additional packages.
+## Display behavior
 
-## Display
+The 64x32 display keeps **TEAM GAMES** fixed at the top. The matchup and local date/time scroll upward through the lower portion of the display. It shows one complete pass through the selected team's upcoming games, then returns control to Falkyre's board rotation.
 
-The 64x32 display keeps `Canes Games` fixed at the top. Only the matchup and local date/time (for example, `Nov 15 7PM`) scroll upward through the lower portion of the display; the next game's details enter from the bottom. The compact small font is retained.
+A home game is shown as `TEAM vs OPP`; an away game is shown as `TEAM @ OPP`.
 
-A home game is shown as `CAR vs OPP`; an away game is shown as `CAR @ OPP`.
-
-## Notes
-
-The plugin obtains the schedule from the NHL's public web API. It requires network access from the scoreboard computer. This code is written against the Falkyre plugin/board interface and has not been physically tested on your LED matrix; please verify rendering on the scoreboard after installation.
+The plugin uses Python's standard library and does not require additional packages. It requires network access to the NHL public schedule API.
