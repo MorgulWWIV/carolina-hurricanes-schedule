@@ -1,13 +1,13 @@
 {
-  "name": "carolina_schedule",
-  "version": "1.1.0",
+  "name": "nhl_team_schedule",
+  "version": "1.2.0",
   "description": "Displays the next 10 games for a user-selected NHL team on an NHL LED Scoreboard",
   "author": "MorgulWWIV",
   "enabled": true,
   "boards": [
     {
-      "id": "carolina_schedule",
-      "class_name": "CarolinaScheduleBoard",
+      "id": "nhl_team_schedule",
+      "class_name": "NHLTeamScheduleBoard",
       "module": "board"
     }
   ],
