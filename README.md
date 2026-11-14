@@ -4,6 +4,7 @@ A configurable plugin for the **Falkyre NHL LED Scoreboard**. Choose any NHL tea
 
 - Target: Falkyre 2026.03
 - Matrix layout: 64x32
+- Plugin ID: `nhl_team_schedule`
 - Default team: Carolina Hurricanes (CAR)
 - Display timezone: America/New_York (Eastern Time)
 - Refresh interval: every 30 minutes
@@ -13,7 +14,7 @@ A configurable plugin for the **Falkyre NHL LED Scoreboard**. Choose any NHL tea
 
 ## Choose your team
 
-Edit `src/boards/plugins/carolina_schedule/config.json` and change `team_abbreviation` to the NHL club abbreviation you want. Examples:
+Edit `src/boards/plugins/nhl_team_schedule/config.json` and change `team_abbreviation` to the NHL club abbreviation you want. Examples:
 
 | Team | Abbreviation |
 |---|---|
@@ -29,31 +30,41 @@ Use the NHL team's three-letter abbreviation. The heading on the display is gene
 
 ## Install
 
+For a new installation:
+
+```bash
+python plugins.py add https://github.com/MorgulWWIV/nhl-scoreboard-schedule.git
+```
+
 For an existing installation, sync the updated plugin:
 
 ```bash
 python plugins.py sync
 ```
 
-For a new installation:
-
-```bash
-python plugins.py add https://github.com/MorgulWWIV/carolina-hurricanes-schedule.git
-```
-
 Copy the sample configuration if you do not already have a config file:
 
 ```bash
-cp src/boards/plugins/carolina_schedule/config.sample.json src/boards/plugins/carolina_schedule/config.json
+cp src/boards/plugins/nhl_team_schedule/config.sample.json src/boards/plugins/nhl_team_schedule/config.json
 ```
 
-Enable `carolina_schedule` in the scoreboard's state configuration if it is not already enabled, then restart:
+Enable `nhl_team_schedule` in the scoreboard's state configuration if it is not already enabled, then restart:
 
 ```bash
 sudo systemctl restart nhl-scoreboard
 ```
 
-The existing plugin ID and directory are retained so current installations can update without reinstalling or changing their board configuration.
+### Existing installation migration
+
+This release changes the plugin ID from `carolina_schedule` to `nhl_team_schedule`. Because Falkyre uses the plugin ID in its configuration and plugin directory, an existing installation may need to be migrated rather than simply synced in place.
+
+1. Back up your existing `carolina_schedule/config.json` if you have customized it.
+2. Install or sync this repository so the new `nhl_team_schedule` plugin directory is created.
+3. Copy your saved configuration into `src/boards/plugins/nhl_team_schedule/config.json`.
+4. Change the enabled board/plugin entry in Falkyre's state configuration from `carolina_schedule` to `nhl_team_schedule`.
+5. Restart the scoreboard service.
+
+Do not delete the old plugin directory until the new board is running correctly.
 
 ## Configuration
 
