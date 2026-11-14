@@ -1,6 +1,7 @@
 {
   "games_to_show": 10,
   "display_seconds": 7,
+  "scroll_seconds": 0.8,
   "refresh_minutes": 30,
   "timezone": "America/New_York",
   "team_abbreviation": "CAR",
