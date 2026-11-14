@@ -1,4 +1,4 @@
-"""Carolina Hurricanes upcoming schedule board for NHL LED Scoreboard."""
+"""Configurable NHL team schedule board for NHL LED Scoreboard."""
 
 import datetime
 import json
@@ -16,7 +16,7 @@ SCHEDULE_URL = "https://api-web.nhle.com/v1/club-schedule-season/{team}/now"
 
 
 class CarolinaScheduleBoard(BoardBase):
-    """Keep the heading fixed while upcoming game details scroll upward."""
+    """Keep a generic heading fixed while the selected team games scroll upward."""
 
     def __init__(self, data, matrix, sleepEvent):
         super().__init__(data, matrix, sleepEvent)
@@ -29,7 +29,7 @@ class CarolinaScheduleBoard(BoardBase):
         self.refresh_seconds = int(self.board_config.get("refresh_minutes", 30)) * 60
         self.scroll_seconds = float(self.board_config.get("scroll_seconds", 0.8))
         self.timezone_name = self.board_config.get("timezone", "America/New_York")
-        self.team_abbreviation = self.board_config.get("team_abbreviation", "CAR")
+        self.team_abbreviation = str(self.board_config.get("team_abbreviation", "CAR")).strip().upper()
 
         self.font = data.config.layout.font
         self.font_large = data.config.layout.font_large
@@ -41,7 +41,7 @@ class CarolinaScheduleBoard(BoardBase):
     def _fetch_games(self):
         url = SCHEDULE_URL.format(team=self.team_abbreviation)
         request = urllib.request.Request(
-            url, headers={"User-Agent": "NHL-LED-Scoreboard-Carolina-Schedule/1.0"}
+            url, headers={"User-Agent": "NHL-LED-Scoreboard-Team-Schedule/1.0"}
         )
         with urllib.request.urlopen(request, timeout=12) as response:
             payload = json.loads(response.read().decode("utf-8"))
@@ -85,10 +85,10 @@ class CarolinaScheduleBoard(BoardBase):
             self._games = self._fetch_games()
             self._error = None
             self._game_index = 0
-            debug.info("Carolina schedule refreshed: %d upcoming games", len(self._games))
+            debug.info("%s schedule refreshed: %d upcoming games", self.team_abbreviation, len(self._games))
         except (urllib.error.URLError, TimeoutError, ValueError, KeyError, OSError) as exc:
             self._error = str(exc)
-            debug.warning("Unable to refresh Carolina schedule: %s", exc)
+            debug.warning("Unable to refresh %s schedule: %s", self.team_abbreviation, exc)
         finally:
             self._last_refresh = now
 
@@ -97,7 +97,7 @@ class CarolinaScheduleBoard(BoardBase):
 
     def _draw_heading(self, layout):
         """Draw the fixed heading above the scrolling game area."""
-        title = "Canes Games"
+        title = "TEAM GAMES"
         item = self._layout_item(layout, "title")
         if item:
             self.matrix.draw_text_layout(item, title, fillColor="red")
@@ -198,4 +198,4 @@ class CarolinaScheduleBoard(BoardBase):
 
         # Reset for the next time Falkyre selects this board.
         self._game_index = 0
-        debug.info("Carolina schedule: completed one pass through %d games", total_games)
+        debug.info("%s schedule: completed one pass through %d games", self.team_abbreviation, total_games)
