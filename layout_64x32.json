@@ -3,7 +3,7 @@
     "position": [0, 0],
     "align": "left-top"
   },
-  "carolina_schedule": {
+  "nhl_team_schedule": {
     "title": {
       "position": ["50%", 3],
       "align": "center-top",
