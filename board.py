@@ -97,7 +97,7 @@ class NHLTeamScheduleBoard(BoardBase):
 
     def _draw_heading(self, layout):
         """Draw the fixed heading above the scrolling game area."""
-        title = "TEAM GAMES"
+        title = "UPCOMING GAMES"
         item = self._layout_item(layout, "title")
         if item:
             self.matrix.draw_text_layout(item, title, fillColor="red")
