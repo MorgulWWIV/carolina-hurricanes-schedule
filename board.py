@@ -15,7 +15,7 @@ debug = logging.getLogger("scoreboard")
 SCHEDULE_URL = "https://api-web.nhle.com/v1/club-schedule-season/{team}/now"
 
 
-class CarolinaScheduleBoard(BoardBase):
+class NHLTeamScheduleBoard(BoardBase):
     """Keep a generic heading fixed while the selected team games scroll upward."""
 
     def __init__(self, data, matrix, sleepEvent):
@@ -157,7 +157,7 @@ class CarolinaScheduleBoard(BoardBase):
 
     def render(self):
         """Show one complete pass through the upcoming games, then yield to Falkyre."""
-        layout = self.get_board_layout("carolina_schedule")
+        layout = self.get_board_layout("nhl_team_schedule")
         self._refresh_if_needed()
 
         if self._error and not self._games:
