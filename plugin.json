@@ -1,0 +1,19 @@
+{
+  "name": "carolina_schedule",
+  "version": "1.0.0",
+  "description": "Displays the next 10 Carolina Hurricanes games on an NHL LED Scoreboard",
+  "author": "MorgulWWIV",
+  "enabled": true,
+  "boards": [
+    {
+      "id": "carolina_schedule",
+      "class_name": "CarolinaScheduleBoard",
+      "module": "board"
+    }
+  ],
+  "requirements": {
+    "app_version": ">=2026.03.0",
+    "python_dependencies": []
+  },
+  "preserve_files": []
+}
