@@ -1,6 +1,6 @@
 # Carolina Hurricanes Schedule — NHL LED Scoreboard
 
-A plugin for the **Falkyre NHL LED Scoreboard** that displays the next 10 Carolina Hurricanes games, scrolling vertically from one game to the next.
+A plugin for the **Falkyre NHL LED Scoreboard** that displays the next 10 Carolina Hurricanes games, keeping a fixed heading while game details scroll upward.
 
 - Target: Falkyre 2026.03
 - Matrix layout: 64x32
@@ -51,7 +51,7 @@ The plugin uses Python's standard library and does not require additional packag
 
 ## Display
 
-Each 64x32 screen keeps the same compact three-line layout: `CANES SCHEDULE`, the matchup, and the local date/time (for example, `Nov 15 7PM`). After each game has been displayed, the full three-line screen slides upward and the next game enters from the bottom. The small font is retained on all three lines.
+The 64x32 display keeps `Canes Games` fixed at the top. Only the matchup and local date/time (for example, `Nov 15 7PM`) scroll upward through the lower portion of the display; the next game's details enter from the bottom. The compact small font is retained.
 
 A home game is shown as `CAR vs OPP`; an away game is shown as `CAR @ OPP`.
 
