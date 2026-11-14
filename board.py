@@ -77,7 +77,7 @@ class CarolinaScheduleBoard(BoardBase):
                     if is_home else
                     f"{self.team_abbreviation} @ {opponent_abbrev}"
                 ),
-                "date_time": local_start.strftime("%b %d  %I:%M %p").replace(" 0", " "),
+                "date_time": local_start.strftime("%b %d  %I%p").replace(" 0", " ").replace("  ", " "),
                 "venue": game.get("venue", {}).get("default", "")
             })
 
@@ -122,12 +122,12 @@ class CarolinaScheduleBoard(BoardBase):
             matchup = "DATA UNAVAILABLE"
             date_time = "CHECK NETWORK"
         elif not self._games:
-            title = "CAROLINA HURRICANES"
+            title = "CANES SCHEDULE"
             matchup = "NO UPCOMING GAMES"
             date_time = "SCHEDULE CLEAR"
         else:
             game = self._games[self._game_index % len(self._games)]
-            title = "NEXT CANES GAME" if self._game_index == 0 else "UPCOMING CANES"
+            title = "CANES SCHEDULE"
             matchup = game["matchup"]
             date_time = game["date_time"]
             self._game_index = (self._game_index + 1) % len(self._games)
