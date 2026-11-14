@@ -156,28 +156,29 @@ class CarolinaScheduleBoard(BoardBase):
         self._draw_fixed_heading_over_scroll(layout)
 
     def render(self):
-        """Keep cycling through every upcoming game until the board is deactivated."""
+        """Show one complete pass through the upcoming games, then yield to Falkyre."""
         layout = self.get_board_layout("carolina_schedule")
+        self._refresh_if_needed()
 
-        while not self.sleepEvent.is_set():
-            self._refresh_if_needed()
+        if self._error and not self._games:
+            self._draw_status(layout, "DATA UNAVAILABLE", "CHECK NETWORK")
+            self.matrix.render()
+            self.sleepEvent.wait(self.display_seconds)
+            return
 
-            if self._error and not self._games:
-                self._draw_status(layout, "DATA UNAVAILABLE", "CHECK NETWORK")
-                self.matrix.render()
-                if self.sleepEvent.wait(self.display_seconds):
-                    return
-                continue
+        if not self._games:
+            self._draw_status(layout, "NO UPCOMING GAMES", "SCHEDULE CLEAR")
+            self.matrix.render()
+            self.sleepEvent.wait(self.display_seconds)
+            return
 
-            if not self._games:
-                self._draw_status(layout, "NO UPCOMING GAMES", "SCHEDULE CLEAR")
-                self.matrix.render()
-                if self.sleepEvent.wait(self.display_seconds):
-                    return
-                continue
+        # Capture this pass so refreshes or index changes cannot extend it endlessly.
+        games_this_pass = list(self._games)
+        total_games = len(games_this_pass)
 
-            current_index = self._game_index % len(self._games)
-            current_game = self._games[current_index]
+        for index, current_game in enumerate(games_this_pass):
+            if self.sleepEvent.is_set():
+                return
 
             self.matrix.clear()
             self._draw_heading(layout)
@@ -185,18 +186,16 @@ class CarolinaScheduleBoard(BoardBase):
             self._draw_fixed_heading_over_scroll(layout)
             self.matrix.render()
 
+            # Give each game its full screen time, including the final game.
             if self.sleepEvent.wait(self.display_seconds):
                 return
 
-            # Advance continuously through the entire list, then wrap to game one.
-            if len(self._games) > 1:
-                next_index = (current_index + 1) % len(self._games)
-                if not self._scroll_to_next_game(
-                    layout, current_game, self._games[next_index]
-                ):
+            # Scroll to the next game, but do not wrap after the final game.
+            if index < total_games - 1:
+                next_game = games_this_pass[index + 1]
+                if not self._scroll_to_next_game(layout, current_game, next_game):
                     return
-                self._game_index = next_index
-            else:
-                # A single-game schedule remains visible until the board changes.
-                if self.sleepEvent.wait(self.display_seconds):
-                    return
+
+        # Reset for the next time Falkyre selects this board.
+        self._game_index = 0
+        debug.info("Carolina schedule: completed one pass through %d games", total_games)
