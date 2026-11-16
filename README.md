@@ -1,6 +1,7 @@
 # NHL Team Schedule — NHL LED Scoreboard
 
-A configurable plugin for the **Falkyre NHL LED Scoreboard**. Choose any NHL team by its three-letter abbreviation and display that team's next games.
+A configurable plugin for the **Falkyre NHL LED Scoreboard**. (https://github.com/falkyre/nhl-led-scoreboard)
+Choose any NHL team by its three-letter abbreviation and display that team's next games.
 
 - Target: Falkyre 2026.03
 - Matrix layout: 64x32
